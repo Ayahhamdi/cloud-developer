@@ -57,6 +57,17 @@ router.get('/signed-url/:fileName',
     res.status(201).send({url: url});
 });
 
+// Get method to call image filter processing server
+//router.get('/filteredimage',
+//    async (req: Request, res: Response) => {
+//    const image_url = req.query.image_url;
+//    if(!image_url){
+//        res.status(404).send("image url is not vaild");
+//    }
+
+//    res.redirect(`http://localhost:8082/image_url=${image_url}`,202);
+//});
+
 // Post meta data and the filename after a file is uploaded 
 // NOTE the file name is they key name in the s3 bucket.
 // body : {caption: string, fileName: string};
