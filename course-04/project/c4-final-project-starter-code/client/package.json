@@ -23,7 +23,7 @@
     "@types/react-dom": "16.8.4",
     "@types/react-router-dom": "^4.3.5",
     "@types/styled-components": "^4.4.3",
-    "auth0-js": "^9.14.2",
+    "auth0-js": "^9.14.3",
     "typescript": "3.4.3"
   },
   "scripts": {
