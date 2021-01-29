@@ -4,15 +4,16 @@ import 'source-map-support/register'
 import { verify, decode } from 'jsonwebtoken'
 import { createLogger } from '../../utils/logger'
 import Axios from 'axios'
+import * as util from 'util';
 import { Jwt } from '../../auth/Jwt'
 import { JwtPayload } from '../../auth/JwtPayload'
 
 const logger = createLogger('auth')
 
-// TODO: Provide a URL that can be used to download a certificate that can be used
+// TODO: Provide a URL that can be used to download a certificate that can be used Done
 // to verify JWT token signature.
 // To get this URL you need to go to an Auth0 page -> Show Advanced Settings -> Endpoints -> JSON Web Key Set
-const jwksUrl = '...'
+const jwksUrl = 'https://dev-rsnpdg6v.us.auth0.com/.well-known/jwks.json'
 
 export const handler = async (
   event: CustomAuthorizerEvent
@@ -56,12 +57,36 @@ export const handler = async (
 
 async function verifyToken(authHeader: string): Promise<JwtPayload> {
   const token = getToken(authHeader)
+  const response = await Axios.get(jwksUrl)
+  const jwks = response.data
+  const keys:any[] = jwks.keys
+  logger.info("jwks - "+util.inspect(jwks, false, null, true))
   const jwt: Jwt = decode(token, { complete: true }) as Jwt
 
-  // TODO: Implement token verification
+  // TODO: Implement token verification Done
   // You should implement it similarly to how it was implemented for the exercise for the lesson 5
   // You can read more about how to do this here: https://auth0.com/blog/navigating-rs256-and-jwks/
-  return undefined
+  
+  const signingKeys = keys.filter(key => key.use === 'sig' // JWK property `use` determines the JWK is for signing
+      && key.kty === 'RSA' // We are only supporting RSA
+      && key.kid           // The `kid` must be present to be useful for later
+      && key.x5c && key.x5c.length // Has useful public keys (we aren't using n or e)
+    ).map(key => {
+      return { kid: key.kid, nbf: key.nbf, x5c: key.x5c[0] }
+    })
+  
+    const signingKey = signingKeys.find(key => key.kid === jwt.header.kid);
+  const certValue:string = signingKey.x5c
+  
+  const certNewValue = certValue.match(/.{1,64}/g).join('\n')
+  
+  const finalCertKey:string = `-----BEGIN CERTIFICATE-----\n${certNewValue}\n-----END CERTIFICATE-----\n`
+  
+  logger.info("finalCertKey - "+util.inspect(finalCertKey, false, null, true))
+  
+  const jwtPayload:JwtPayload = verify(token, finalCertKey, { algorithms: ['RS256'] }) as JwtPayload
+  
+  return jwtPayload
 }
 
 function getToken(authHeader: string): string {
