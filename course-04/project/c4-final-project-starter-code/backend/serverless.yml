@@ -23,6 +23,16 @@ provider:
 
 custom:
   topicName: todosTopic-${self:provider.stage}
+  serverless-offline:
+    port: 3003
+
+  dynamodb:
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+
+
 
 functions:
 
